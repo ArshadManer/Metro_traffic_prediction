@@ -14,7 +14,6 @@ hourly weather features and holidays are incorporated.
 ## Requirements
 
 The following packages are required to run the code:
-
 - NumPy
 - Pandas
 - Scikit-learn
