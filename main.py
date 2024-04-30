@@ -3,15 +3,28 @@ import random
 import pickle
 import sys
 import os
+import socket
 import warnings
 warnings.filterwarnings('ignore')
 
-base_path = os.path.dirname(os.getcwd())
+class AuthorizedModel:
+    def __init__(self, model):
+        self.model = model
+        self.authorized_ips = ['172.16.251.35','172.16.20.196']
 
-with open(os.path.join(base_path,'Traffic_prediction/saved_models/best_model.pickle'), 'rb') as f:
+    def predict(self, x):
+        ip_address = socket.gethostbyname(socket.gethostname())
+        if ip_address in self.authorized_ips:
+            return self.model.predict(x)
+        else:
+            raise Exception("Unauthorized user")
+
+base_path = os.getcwd()
+
+with open(os.path.join(base_path,'Metro_traffic_prediction/saved_models/model_en.pickle'), 'rb') as f:
     model = pickle.load(f)
 
-with open(os.path.join(base_path,'Traffic_prediction/saved_models/encoder.pickle'), 'rb') as f:
+with open(os.path.join(base_path,'Metro_traffic_prediction/saved_models/encoder.pickle'), 'rb') as f:
     encoder = pickle.load(f)
         
 weather_main = ['Clear','Cloudy','Rainy']
@@ -31,14 +44,13 @@ def get_cat_data(data_list: list):
 def get_num_data(num_list):
     return random.randint(num_list[0], num_list[1])
 
-
 def random_value():
     df = pd.DataFrame(columns=['holiday', 'temp', 'rain_1h', 'snow_1h', 'clouds_all','Day', 'Month','Year','time_category'],
                       data=[[get_cat_data(holiday), get_num_data(temp), get_num_data(rain), snow, get_num_data(cloud),
                              get_num_data(day),get_num_data(month),get_num_data(year),get_num_data(time_cat)]])
     cat_data = pd.DataFrame(columns=['weather_main'], data=[get_cat_data(weather_main)])
 
-    X_encoded = pd.DataFrame(encoder.transform(cat_data).toarray(), columns=encoder.get_feature_names())
+    X_encoded = pd.DataFrame(encoder.transform(cat_data).toarray(), columns=encoder.get_feature_names_out())
     df_final = pd.concat([df, X_encoded], axis=1)
     print("expected traffic_volume is : ",model.predict(df_final))
 
@@ -74,7 +86,7 @@ def values():
     
     cat_data = pd.DataFrame(columns=['weather_main'], data=[weather_main[enter_cat_value(weather_main, "Weather")]])
     
-    X_encoded = pd.DataFrame(encoder.transform(cat_data).toarray(), columns=encoder.get_feature_names())
+    X_encoded = pd.DataFrame(encoder.transform(cat_data).toarray(), columns=encoder.get_feature_names_out())
     df_final = pd.concat([df, X_encoded], axis=1)
     print(df_final)
     print("expected traffic_volume is : ",model.predict(df_final))
